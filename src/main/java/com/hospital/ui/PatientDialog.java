@@ -1,6 +1,8 @@
 package com.hospital.ui;
 
 import com.hospital.model.Patient;
+import com.hospital.model.enums.BloodGroup;
+import com.hospital.model.enums.Gender;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,7 +16,8 @@ import java.time.format.DateTimeParseException;
  */
 public class PatientDialog extends JDialog {
     private JTextField nameField, ageField, phoneField, emailField, addressField, diseaseField, emergencyContactField;
-    private JComboBox<String> genderCombo, bloodGroupCombo;
+    private JComboBox<Gender> genderCombo;
+     private JComboBox<BloodGroup> bloodGroupCombo;
     private JTextField admissionDateField;
     private JButton saveButton, cancelButton;
     private boolean confirmed = false;
@@ -48,11 +51,9 @@ public class PatientDialog extends JDialog {
         emergencyContactField = new JTextField(20);
         admissionDateField = new JTextField(20);
         
-        String[] genders = {"Male", "Female", "Other"};
-        genderCombo = new JComboBox<>(genders);
+        genderCombo = new JComboBox<>(Gender.values());
         
-        String[] bloodGroups = {"A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"};
-        bloodGroupCombo = new JComboBox<>(bloodGroups);
+        bloodGroupCombo = new JComboBox<>(BloodGroup.values());
         
         saveButton = new JButton("Save");
         saveButton.setBackground(new Color(40, 167, 69));
@@ -226,12 +227,12 @@ public class PatientDialog extends JDialog {
         
         patient.setName(nameField.getText().trim());
         patient.setAge(age);
-        patient.setGender((String) genderCombo.getSelectedItem());
+        patient.setGender((Gender) genderCombo.getSelectedItem());
         patient.setPhone(phoneField.getText().trim());
         patient.setEmail(emailField.getText().trim().isEmpty() ? null : emailField.getText().trim());
         patient.setAddress(addressField.getText().trim().isEmpty() ? null : addressField.getText().trim());
         patient.setDisease(diseaseField.getText().trim().isEmpty() ? null : diseaseField.getText().trim());
-        patient.setBloodGroup((String) bloodGroupCombo.getSelectedItem());
+        patient.setBloodGroup((BloodGroup) bloodGroupCombo.getSelectedItem());
         patient.setEmergencyContact(emergencyContactField.getText().trim().isEmpty() ? null : emergencyContactField.getText().trim());
         patient.setAdmissionDate(admissionDate);
         

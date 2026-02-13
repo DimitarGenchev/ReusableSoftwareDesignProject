@@ -9,7 +9,7 @@ if not exist build mkdir build
 
 echo.
 echo Step 2: Checking for MySQL JDBC driver...
-set MYSQL_CONNECTOR="C:\Users\Himanshu\OneDrive\Documents\java\mysql-connector-j-9.4.0\mysql-connector-j-9.4.0.jar"
+set MYSQL_CONNECTOR="lib\mysql-connector-j-9.6.0.jar"
 if not exist %MYSQL_CONNECTOR% (
     echo ERROR: MySQL JDBC driver not found at expected location!
     echo Expected: %MYSQL_CONNECTOR%
@@ -23,7 +23,7 @@ echo MySQL JDBC driver found: %MYSQL_CONNECTOR%
 
 echo.
 echo Step 3: Compiling Java files...
-javac -cp %MYSQL_CONNECTOR% -d build src/main/java/com/hospital/*.java src/main/java/com/hospital/dao/*.java src/main/java/com/hospital/model/*.java src/main/java/com/hospital/ui/*.java src/main/java/com/hospital/util/*.java
+javac -cp %MYSQL_CONNECTOR% -d build src/main/java/com/hospital/*.java src/main/java/com/hospital/dao/*.java src/main/java/com/hospital/model/*.java src/main/java/com/hospital/model/enums/*.java src/main/java/com/hospital/ui/*.java src/main/java/com/hospital/util/*.java
 
 if %errorlevel% neq 0 (
     echo.
