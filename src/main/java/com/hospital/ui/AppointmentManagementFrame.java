@@ -24,7 +24,7 @@ public class AppointmentManagementFrame extends JFrame {
     private JTable appointmentTable;
     private DefaultTableModel tableModel;
     private JTextField searchField;
-    private JButton addButton, editButton, cancelButton, deleteButton, refreshButton;
+    private JButton addButton, editButton, cancelButton, deleteButton, refreshButton, completeButton;
     private JComboBox<String> statusFilter;
 
     public AppointmentManagementFrame(User user) {
@@ -75,6 +75,7 @@ public class AppointmentManagementFrame extends JFrame {
         cancelButton = createStyledButton("Cancel Appointment", new Color(255, 193, 7));
         deleteButton = createStyledButton("Delete Appointment", new Color(220, 53, 69));
         refreshButton = createStyledButton("Refresh", new Color(108, 117, 125));
+        completeButton = createStyledButton("Complete", new Color(23, 162, 184)); // Cyan цвят
     }
 
     private JButton createStyledButton(String text, Color color) {
@@ -136,6 +137,7 @@ public class AppointmentManagementFrame extends JFrame {
         buttonPanel.add(cancelButton);
         buttonPanel.add(deleteButton);
         buttonPanel.add(refreshButton);
+        buttonPanel.add(completeButton);
 
         // Top Panel combining filter and buttons
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -162,6 +164,7 @@ public class AppointmentManagementFrame extends JFrame {
         cancelButton.addActionListener(e -> cancelSelectedAppointment());
         deleteButton.addActionListener(e -> deleteSelectedAppointment());
         refreshButton.addActionListener(e -> loadAppointments());
+        completeButton.addActionListener(e -> completeSelectedAppointment());
     }
 
     private void loadAppointments() {
@@ -360,6 +363,15 @@ public class AppointmentManagementFrame extends JFrame {
 
         try {
             Appointment appointment = appointmentDAO.getAppointmentById(appointmentId);
+
+            if (!appointment.isEditable()) {
+                JOptionPane.showMessageDialog(this,
+                        "This appointment cannot be edited because it is completed, cancelled, or in the past.",
+                        "Action Not Allowed", JOptionPane.WARNING_MESSAGE);
+
+                return;
+            }
+
             List<Patient> patients = patientDAO.getAllPatients();
             List<Doctor> doctors = doctorDAO.getAllDoctors();
 
@@ -403,7 +415,7 @@ public class AppointmentManagementFrame extends JFrame {
 
         String patientName = (String) tableModel.getValueAt(selectedRow, 1);
         String doctorName = (String) tableModel.getValueAt(selectedRow, 2);
-        int appointmentId = (Integer) tableModel.getValueAt(selectedRow, 0);
+        int appointmentId = (Integer) tableModel.getValueAt(selectedRow, 0); // Взимаме ID-то
 
         int choice = JOptionPane.showConfirmDialog(this,
                 "Are you sure you want to cancel the appointment for " + patientName + " with " + doctorName + "?",
@@ -413,20 +425,68 @@ public class AppointmentManagementFrame extends JFrame {
 
         if (choice == JOptionPane.YES_OPTION) {
             try {
-                if (appointmentDAO.cancelAppointment(appointmentId)) {
-                    JOptionPane.showMessageDialog(this,
-                            "Appointment cancelled successfully!",
-                            "Success", JOptionPane.INFORMATION_MESSAGE);
-                    loadAppointments();
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Failed to cancel appointment.",
-                            "Error", JOptionPane.ERROR_MESSAGE);
+                Appointment appointment = appointmentDAO.getAppointmentById(appointmentId);
+
+                if (appointment != null) {
+                    try {
+                        appointment.cancel();
+
+                        if (appointmentDAO.updateAppointment(appointment)) {
+                            JOptionPane.showMessageDialog(this,
+                                    "Appointment cancelled successfully!",
+                                    "Success", JOptionPane.INFORMATION_MESSAGE);
+                            loadAppointments();
+                        } else {
+                            JOptionPane.showMessageDialog(this,
+                                    "Failed to update appointment status in database.",
+                                    "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    } catch (IllegalStateException e) {
+                        JOptionPane.showMessageDialog(this,
+                                "Validation Error: " + e.getMessage(),
+                                "Operation Failed", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                        "Error cancelling appointment: " + e.getMessage(),
+                        "Error processing cancellation: " + e.getMessage(),
                         "Database Error", JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void completeSelectedAppointment() {
+        int selectedRow = appointmentTable.getSelectedRow();
+        if (selectedRow == -1) {
+            JOptionPane.showMessageDialog(this, "Please select an appointment to complete.", "No Selection",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        int appointmentId = (Integer) tableModel.getValueAt(selectedRow, 0);
+
+        int choice = JOptionPane.showConfirmDialog(this,
+                "Mark this appointment as COMPLETED?",
+                "Confirm Completion", JOptionPane.YES_NO_OPTION);
+
+        if (choice == JOptionPane.YES_OPTION) {
+            try {
+                Appointment appointment = appointmentDAO.getAppointmentById(appointmentId);
+                if (appointment != null) {
+                    try {
+                        appointment.complete();
+
+                        if (appointmentDAO.updateAppointment(appointment)) {
+                            JOptionPane.showMessageDialog(this, "Appointment marked as completed!", "Success",
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            loadAppointments();
+                        }
+                    } catch (IllegalStateException e) {
+                        JOptionPane.showMessageDialog(this, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }

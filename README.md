@@ -39,3 +39,22 @@ This commit addresses several critical architectural violations found in the leg
   * Fixed Swing UI glitches: Added `setOpaque(true)`/`setBorderPainted(false)` to fix invisible Action Buttons.
   * Refactored `AppointmentManagementFrame` to fetch Patient/Doctor details dynamically by ID, adapting to the normalized data model.
   * Implemented **Case-Insensitive Search** and underscore-to-space mapping for better UX in status filtering.
+
+### Commit 3: Implement Rich Domain Model behavior for Appointment workflow
+
+This commit transitions the `Appointment` entity from an **Anemic Domain Model** (just getters/setters) to a **Rich Domain Model** by encapsulating business rules and state transitions within the class itself.
+
+#### 🏗️ Architectural Wins (Violations Fixed)
+* **Fixed Anemic Domain Model:** Business logic (e.g., "Cannot cancel a completed appointment") is now enforced by the Entity, not scattered across the UI layer. This improves **Encapsulation**.
+* **Enforced Data Integrity:** The model now prevents invalid state transitions (e.g., editing a past appointment) by throwing exceptions (`IllegalStateException`), ensuring the database never receives corrupted logical states.
+* **UI Logic Simplification:** The UI components (`AppointmentManagementFrame`) no longer perform complex validation checks manually. Instead, they query the model (e.g., `appointment.isEditable()`) or invoke actions (`appointment.cancel()`), adhering to the **Tell, Don't Ask** principle.
+
+#### 🛠️ Detailed Changes
+* **Domain Layer (`Appointment.java`):**
+  * Added state transition methods: `cancel()`, `complete()`, `reschedule()`.
+  * Added validation guards: Methods now throw exceptions if an action is invalid for the current state.
+  * Added computed properties: `isPast()` (checks date/time against `LocalDateTime.now()`) and `isEditable()`.
+* **UI Layer (`AppointmentManagementFrame.java`):**
+  * **New Feature:** Added a **"Complete" button** to mark appointments as finished directly from the table.
+  * **Refactoring:** Updated the "Cancel" logic to use `appointment.cancel()` instead of direct DAO updates, ensuring business rules are respected.
+  * **UX Improvement:** The "Edit" button is now guarded by `appointment.isEditable()` – users receive a warning if they try to modify past or finalized appointments.

@@ -117,6 +117,42 @@ public class Appointment {
         this.updatedAt = updatedAt;
     }
 
+    public void cancel() {
+        if (this.status == AppointmentStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel an appointment that is already completed.");
+        }
+
+        this.status = AppointmentStatus.CANCELLED;
+    }
+
+    public void complete() {
+        if (this.status == AppointmentStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot complete an appointment that was cancelled.");
+        }
+
+        this.status = AppointmentStatus.COMPLETED;
+    }
+
+    public void reschedule(LocalDate newDate, LocalTime newTime) {
+        if (newDate.isBefore(LocalDate.now())) {
+            throw new IllegalArgumentException("Cannot reschedule to a past date.");
+        }
+
+        this.appointmentDate = newDate;
+        this.appointmentTime = newTime;
+        this.status = AppointmentStatus.SCHEDULED;
+    }
+
+    public boolean isPast() {
+        LocalDateTime appointmentDateTime = LocalDateTime.of(this.appointmentDate, this.appointmentTime);
+
+        return appointmentDateTime.isBefore(LocalDateTime.now());
+    }
+
+    public boolean isEditable() {
+        return this.status == AppointmentStatus.SCHEDULED && !isPast();
+    }
+
     @Override
     public String toString() {
         return "Appointment{" +
